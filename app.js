@@ -7,6 +7,7 @@ const Listing = require("./models/listing.js");
 const path = require("path");
 const methodOverride = require("method-override");
 const ejsMate = require('ejs-mate');
+const wrapAsync = require("./utils/wrapAsync.js");
 
 main()
     .then(() => {
@@ -51,11 +52,12 @@ app.get("/listings/:id", async (req, res) => {
     res.render("listings/show.ejs", { listing });
 });
 
-app.post("/listings", async(req, res) => {
-    const newListing = new Listing(req.body.listing);
-    await newListing.save();
-    res.redirect("/listings");
-});
+
+app.post("/listings",wrapAsync(async(req, res, next) => {
+        const newListing = new Listing(req.body.listing);
+        await newListing.save();
+        res.redirect("/listings");
+}));
 
 app.get("/listing/:id/edit", async(req, res) => {
     let { id } = req.params;
@@ -73,4 +75,10 @@ app.delete("/listings/:id", async(req, res) => {
     let { id } = req.params;
     const deletedListing = await Listing.findByIdAndDelete(id);
     res.redirect("/listings");
+});
+
+
+
+app.use((err, req, res, next) => {
+    res.send("Something went wrong! ");
 });
